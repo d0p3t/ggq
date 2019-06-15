@@ -397,7 +397,7 @@ Citizen.CreateThread(function()
 				return
 			end
 
-			local bans= json.decode(banFileContent)
+			local bans = json.decode(banFileContent)
 
 			if bans == nil then
 				done(Config.Language._err)
@@ -406,37 +406,35 @@ Citizen.CreateThread(function()
 			end
 			local ids = Queue:GetIds(src)
 			local playersBan = nil
-			local now = os.date("%c")
-			local banEnd = now
+			local now = os.time() * 1000 -- epoch in milliseconds
 
 			for _, ban in pairs(bans) do
-				banEnd = os.date("%c", tostring(ban.banEnd):sub(1, -4))
 				if ban.licenseId == Queue:GetIdentifier(src, "license") then
-					if banEnd > now then
+					if ban.banEnd > now then
 						banned = true
 						playersBan = ban
 						break
 					end
 				elseif ban.steamId ~= nil and ban.steamId == Queue:GetIdentifier(src, "steam") then
-					if banEnd > now then
+					if ban.banEnd > now then
 						banned = true
 						playersBan = ban
 						break
 					end
 				elseif ban.xblId ~= nil and ban.xblId == Queue:GetIdentifier(src, "xbl") then
-					if banEnd > now then
+					if ban.banEnd > now then
 						banned = true
 						playersBan = ban
 						break
 					end
 				elseif ban.liveId ~= nil and ban.liveId == Queue:GetIdentifier(src, "live") then
-					if banEnd > now then
+					if ban.banEnd > now then
 						banned = true
 						playersBan = ban
 						break
 					end
 				elseif ban.discordId ~= nil and ban.discordID == Queue:GetIdentifier(src, "discord") then
-					if banEnd > now then
+					if ban.banEnd > now then
 						banned = true
 						playersBan = ban
 						break
@@ -450,7 +448,8 @@ Citizen.CreateThread(function()
 					CancelEvent()
 					return
 				end
-				print("[" .. os.date("%x %X") .. "] " .. name .. " tried to connect but is banned.")
+				local banEnd =  os.date("%c", playersBan.banEnd / 1000)
+				print("[" .. os.date("%x %X") .. "] " .. name .. " tried to connect but is banned until " .. banEnd .. ".")
 				done("Banned until " .. banEnd .. " (Reason: " .. playersBan.reason .. ")")
 				Queue:RemoveFromQueue(ids)
 				Queue:RemoveFromConnecting(ids)
