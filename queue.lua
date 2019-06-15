@@ -444,7 +444,7 @@ Citizen.CreateThread(function()
 				end
 			end
 
-			if banned then
+			if banned == true then
 				if playersBan == nil then
 					done(Config.Language._err)
 					CancelEvent()
