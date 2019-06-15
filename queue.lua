@@ -389,7 +389,7 @@ Citizen.CreateThread(function()
 
 		if Config.CheckBans then -- Ban check
 			local banned = false
-			local banFileContent = LoadResourceFile("gungame-static", "src/server/data/bans.json")
+			local banFileContent = LoadResourceFile("gungame-static", "dist/bans.json")
 			
 			if banFileContent == nil then
 				done(Config.Language._err)
@@ -450,7 +450,7 @@ Citizen.CreateThread(function()
 					CancelEvent()
 					return
 				end
-
+				print("[" .. os.date("%x %X") .. "] " .. name .. " tried to connect but is banned.")
 				done("Banned until " .. banEnd .. " (Reason: " .. playersBan.reason .. ")")
 				Queue:RemoveFromQueue(ids)
 				Queue:RemoveFromConnecting(ids)
