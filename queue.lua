@@ -385,8 +385,6 @@ Citizen.CreateThread(function()
 			return
 		end
 
-		local banned
-
 		if Config.CheckBans then -- Ban check
 			local banned = false
 			local banFileContent = LoadResourceFile("gungame-static", "dist/bans.json")
@@ -433,7 +431,7 @@ Citizen.CreateThread(function()
 						playersBan = ban
 						break
 					end
-				elseif ban.discordId ~= nil and ban.discordID == Queue:GetIdentifier(src, "discord") then
+				elseif ban.discordId ~= nil and ban.discordId == Queue:GetIdentifier(src, "discord") then
 					if ban.banEnd > now then
 						banned = true
 						playersBan = ban
