@@ -379,9 +379,13 @@ Citizen.CreateThread(function()
 			return
 		end
 
-		local lowerName = name.lower()
-		if string.match(lowerName, "34byte") or string.match(lowerName, "desudo") then
-			done("Invalid name")
+		local lowerName = string.lower(name)
+		if string.match(lowerName, "<[^>]*>") or string.match(lowerName, "34byte") or string.match(lowerName, "desudo") then
+			local file = io.open(GetResourcePath(GetCurrentResourceName()) .. "/illegals.txt", "a")
+			io.output(file)
+			io.write("[" .. os.date("%x %X") .. "] Dropped \"" .. lowerName .. "\" for illegal name \n") -- ADD ENDPOINT AND IDENTIFIERS!!!
+			io.close(file)
+			done("Illegal characters found in your name")
 			CancelEvent()
 			return
 		end
@@ -455,8 +459,24 @@ Citizen.CreateThread(function()
 					CancelEvent()
 					return
 				end
-				local banEnd =  os.date("%c", playersBan.banEnd / 1000)
-				print("[" .. os.date("%x %X") .. "] " .. name .. " tried to connect but is banned until " .. banEnd .. " (Reason: \"".. playersBan.reason .."\").")
+
+				local function round2(num, numDecimalPlaces)
+					return tonumber(string.format("%." .. (numDecimalPlaces or 0) .. "f", num))
+				end
+
+				local divideBy = 1000
+
+				if string.len(playersBan.banEnd) > 13 then
+					divideBy = 10000
+				end
+
+				local banEnd = os.date("%c", round2(playersBan.banEnd / divideBy))
+
+				local file = io.open(GetResourcePath(GetCurrentResourceName()) .. "/illegals.txt", "a")
+				io.output(file)
+				io.write("[" .. os.date("%x %X") .. "] " .. name .. " (".. playersBan.licenseId ..") tried to connect but is banned until " .. banEnd .. " (Reason: \"".. playersBan.reason .."\"). \n")
+				io.close(file)
+
 				done("Banned until " .. banEnd .. " (Reason: " .. playersBan.reason .. ")")
 				Queue:RemoveFromQueue(ids)
 				Queue:RemoveFromConnecting(ids)
