@@ -440,7 +440,7 @@ Citizen.CreateThread(function()
 						playersBan = ban
 						break
 					end
-				elseif ban.discordId ~= nil and ban.discordID == Queue:GetIdentifier(src, "discord") then
+				elseif ban.discordId ~= nil and ban.discordId == Queue:GetIdentifier(src, "discord") then
 					if ban.banEnd > now then
 						banned = true
 						playersBan = ban
