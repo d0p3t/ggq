@@ -379,15 +379,22 @@ Citizen.CreateThread(function()
 			return
 		end
 
+		local lowerName = name.lower()
+		if string.match(lowerName, "34byte") or string.match(lowerName, "desudo") then
+			done("Invalid name")
+			CancelEvent()
+			return
+		end
+
 		if Config.RequireSteam and not Queue:IsSteamRunning(src) then
 			done(Config.Language.steam)
 			CancelEvent()
 			return
 		end
 
-		local banned
-
 		if Config.CheckBans then -- Ban check
+
+
 			local banned = false
 			local banFileContent = LoadResourceFile("gungame-static", "dist/bans.json")
 			
@@ -449,7 +456,7 @@ Citizen.CreateThread(function()
 					return
 				end
 				local banEnd =  os.date("%c", playersBan.banEnd / 1000)
-				print("[" .. os.date("%x %X") .. "] " .. name .. " tried to connect but is banned until " .. banEnd .. ".")
+				print("[" .. os.date("%x %X") .. "] " .. name .. " tried to connect but is banned until " .. banEnd .. " (Reason: \"".. playersBan.reason .."\").")
 				done("Banned until " .. banEnd .. " (Reason: " .. playersBan.reason .. ")")
 				Queue:RemoveFromQueue(ids)
 				Queue:RemoveFromConnecting(ids)
