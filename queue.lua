@@ -36,7 +36,7 @@ Queue.Loading = {
 local debug = true
 local displayQueue = false
 local initHostName = false
-local maxPlayers = 16
+local maxPlayers = 32
 
 local tostring = tostring
 local tonumber = tonumber
@@ -339,7 +339,7 @@ end
 
 Citizen.CreateThread(function()
 	local function playerConnect(name, setKickReason, deferrals)
-		maxPlayers = GetConvarInt("sv_maxclients", 16)
+		maxPlayers = GetConvarInt("sv_maxclients", 32)
 		debug = GetConvar("sv_debugqueue", "true") == "true" and true or false
 		displayQueue = GetConvar("sv_displayqueue", "true") == "true" and true or false
 		initHostName = not initHostName and GetConvar("sv_hostname") or initHostName
@@ -380,10 +380,11 @@ Citizen.CreateThread(function()
 		end
 
 		local lowerName = string.lower(name)
-		if string.match(lowerName, "<[^>]*>") or string.match(lowerName, "34byte") or string.match(lowerName, "desudo") then
+		local license = Queue:GetIdentifier(src, "license")
+		if string.match(lowerName, "<[^>]*>") or string.match(lowerName, "34byte") or string.match(lowerName, "ham-mafia") or string.match(lowerName, "desudo") then
 			local file = io.open(GetResourcePath(GetCurrentResourceName()) .. "/illegals.txt", "a")
 			io.output(file)
-			io.write("[" .. os.date("%x %X") .. "] Dropped \"" .. lowerName .. "\" for illegal name \n") -- ADD ENDPOINT AND IDENTIFIERS!!!
+			io.write("[" .. os.date("%x %X") .. "] Dropped \"" .. lowerName .. "\" for illegal name [".. license .."]\n") -- ADD ENDPOINT AND IDENTIFIERS!!!
 			io.close(file)
 			done("Illegal characters found in your name")
 			CancelEvent()
