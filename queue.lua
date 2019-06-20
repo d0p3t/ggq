@@ -415,7 +415,6 @@ Citizen.CreateThread(function()
 
 				exports.ggmongo:findOne('{"collection": "bans", "query": { "banEnd": { "$gt": ' .. now ..'}, "$or": [{ "licenseId": "'.. lId.. '" },{ "steamId": "' ..sId ..'" },{ "xblId": "' ..xId ..'" },{ "liveId": "' .. liId ..'" },{ "discordId": "' .. dId .. '" }]}}', function(success, tban)
 					local banned = false
-					
 					if success == false then
 						callback(nil)
 					end
@@ -428,11 +427,7 @@ Citizen.CreateThread(function()
 					end
 
 					for k, ban in ipairs(tban) do
-						local divideBy = 1000
-						if string.len(ban.banEnd) > 13 then
-							divideBy = 10000
-						end
-						banEnd = os.date("%c", round2(ban.banEnd / divideBy))
+						banEnd = os.date("%c", round2(ban.banEnd / 1000))
 						reason = ban.reason
 						banned = true
 					end
