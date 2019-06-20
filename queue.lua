@@ -397,92 +397,66 @@ Citizen.CreateThread(function()
 		end
 
 		if Config.CheckBans then -- Ban check
+			local banned
+			local checkBan = function(src, callback)
+				local now = (os.time() * 1000) -- epoch in milliseconds
+				local ids = Queue:GetIds(src)
 
+				local lId = Queue:GetIdentifier(src, "license")
+				local sId = Queue:GetIdentifier(src, "steam")
+				local xId = Queue:GetIdentifier(src, "xbl")
+				local liId = Queue:GetIdentifier(src, "live")
+				local dId = Queue:GetIdentifier(src, "discord")
+				if sId == nil then sId = "null" end
+				if xId == nil then xId = "null" end
+				if liId == nil then liId = "null" end
+				if dId == nil then dId = "null" end
 
-			local banned = false
-			local banFileContent = LoadResourceFile("gungame-static", "dist/bans.json")
-			
-			if banFileContent == nil then
-				done(Config.Language._err)
-				CancelEvent()
-				return
+				exports.ggmongo:findOne('{"collection": "bans", "query": { "banEnd": { "$gt": ' .. now ..'}, "$or": [{ "licenseId": "'.. lId.. '" },{ "steamId": "' ..sId ..'" },{ "xblId": "' ..xId ..'" },{ "liveId": "' .. liId ..'" },{ "discordId": "' .. dId .. '" }]}}', function(success, tban)
+					local banned = false
+					
+					if success == false then
+						callback(nil)
+					end
+
+					local banEnd = ""
+					local reason = ""
+
+					local function round2(num, numDecimalPlaces)
+						return tonumber(string.format("%." .. (numDecimalPlaces or 0) .. "f", num))
+					end
+
+					for k, ban in ipairs(tban) do
+						local divideBy = 1000
+						if string.len(ban.banEnd) > 13 then
+							divideBy = 10000
+						end
+						banEnd = os.date("%c", round2(ban.banEnd / divideBy))
+						reason = ban.reason
+						banned = true
+					end
+					callback(banned, reason, banEnd)
+				end)
 			end
 
-			local bans = json.decode(banFileContent)
-
-			if bans == nil then
-				done(Config.Language._err)
-				CancelEvent()
-				return
-			end
-			local ids = Queue:GetIds(src)
-			local playersBan = nil
-			local now = os.time() * 1000 -- epoch in milliseconds
-
-			for _, ban in pairs(bans) do
-				if ban.licenseId == Queue:GetIdentifier(src, "license") then
-					if ban.banEnd > now then
-						banned = true
-						playersBan = ban
-						break
-					end
-				elseif ban.steamId ~= nil and ban.steamId == Queue:GetIdentifier(src, "steam") then
-					if ban.banEnd > now then
-						banned = true
-						playersBan = ban
-						break
-					end
-				elseif ban.xblId ~= nil and ban.xblId == Queue:GetIdentifier(src, "xbl") then
-					if ban.banEnd > now then
-						banned = true
-						playersBan = ban
-						break
-					end
-				elseif ban.liveId ~= nil and ban.liveId == Queue:GetIdentifier(src, "live") then
-					if ban.banEnd > now then
-						banned = true
-						playersBan = ban
-						break
-					end
-				elseif ban.discordId ~= nil and ban.discordId == Queue:GetIdentifier(src, "discord") then
-					if ban.banEnd > now then
-						banned = true
-						playersBan = ban
-						break
-					end
-				end
-			end
-
-			if banned == true then
-				if playersBan == nil then
+			checkBan(src, function(_banned, _reason, _banEnd)
+				if _banned == nil then
 					done(Config.Language._err)
-					CancelEvent()
+					Queue:RemoveFromQueue(ids)
+					Queue:RemoveFromConnecting(ids)
+					banned = true
 					return
 				end
-
-				local function round2(num, numDecimalPlaces)
-					return tonumber(string.format("%." .. (numDecimalPlaces or 0) .. "f", num))
+				banned = _banned
+				if _banned then
+					done(string.format(Config.Language.banned,"Banned until " .. _banEnd .. " (Reason: " .. _reason .. ")"))
+					Queue:RemoveFromQueue(ids)
+					Queue:RemoveFromConnecting(ids)
 				end
+			end)
 
-				local divideBy = 1000
-
-				if string.len(playersBan.banEnd) > 13 then
-					divideBy = 10000
-				end
-
-				local banEnd = os.date("%c", round2(playersBan.banEnd / divideBy))
-
-				local file = io.open(GetResourcePath(GetCurrentResourceName()) .. "/illegals.txt", "a")
-				io.output(file)
-				io.write("[" .. os.date("%x %X") .. "] " .. name .. " (".. playersBan.licenseId ..") tried to connect but is banned until " .. banEnd .. " (Reason: \"".. playersBan.reason .."\"). \n")
-				io.close(file)
-
-				done("Banned until " .. banEnd .. " (Reason: " .. playersBan.reason .. ")")
-				Queue:RemoveFromQueue(ids)
-				Queue:RemoveFromConnecting(ids)
-				CancelEvent()
-				return
-			end
+			while banned == nil do Citizen.Wait(0) end
+			if banned then CancelEvent() return end
 		end
 		
 		local whitelisted
