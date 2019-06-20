@@ -17,7 +17,7 @@ Config.Language = {
 	_err = "There was an unknown error",
 	pos = "You are %d/%d in queue",
 	connectingerr = "Error adding you to connecting list",
-	banned = "%s",
+	banned = "ggq: %s. Appeal at https://discord.gg/SBwfEda",
 	steam = "Error: Steam must be running",
 	prio = "You must be whitelisted to join this server. You may apply at www.d0p3t.nl"
 }
