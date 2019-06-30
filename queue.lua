@@ -427,7 +427,11 @@ Citizen.CreateThread(function()
 					end
 
 					for k, ban in ipairs(tban) do
-						banEnd = os.date("%c", round2(ban.banEnd / 1000))
+						local divideBy = 1000
+						-- if string.len(ban.banEnd) > 13 then
+						-- 	divideBy = 10000
+						-- end
+						banEnd = os.date("%c GMT", round2(ban.banEnd / divideBy))
 						reason = ban.reason
 						banned = true
 					end
