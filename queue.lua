@@ -17,7 +17,8 @@ Config.Language = {
 	connectingerr = "Error adding you to connecting list",
 	banned = "%s. \n\nWrongfully banned? Appeal on discord.d0p3t.nl",
 	steam = "Error: Steam must be running",
-	prio = "You must be whitelisted to join this server."
+	prio = "You must be whitelisted to join this server.",
+	illchar = "Illegal characters found in your name! Remove them and try again."
 }
 -----------------------------------------------------------------------------------------------------------------------
 
@@ -448,7 +449,7 @@ Citizen.CreateThread(
 					string.match(lowerName, "[\\^][1-9]")
 			 then
 				local endpoint = GetPlayerEndpoint(src)
-				done("Illegal characters found in your name! Remove them and try again.")
+				done(Config.Language.illchar)
 				CancelEvent()
 				return
 			end
@@ -462,9 +463,7 @@ Citizen.CreateThread(
 			if Config.CheckBans then -- Ban check
 				local banned
 				local checkBan = function(src, callback)
-					-- local now = (os.time() * 1000) -- epoch in milliseconds
 					local ids = Queue:GetIds(src)
-
 					local lid = Queue:GetIdentifier(src, "license")
 					local sid = Queue:GetIdentifier(src, "steam")
 					local xid = Queue:GetIdentifier(src, "xbl")
@@ -507,13 +506,13 @@ Citizen.CreateThread(
 							local isBanned = false
 							local reason = ""
 							local endDate = 0
-
+							local now = (os.time() * 1000)
 							for k, ban in ipairs(results) do
-								if ban.end_date > endDate then
+								if ban.end_date > endDate and ban.end_date > now then
 									reason = ban.reason
 									endDate = ban.end_date
+									isBanned = true
 								end
-								isBanned = true
 							end
 
 							callback(isBanned, reason, endDate)
@@ -536,7 +535,12 @@ Citizen.CreateThread(
 							local function round2(num, numDecimalPlaces)
 								return tonumber(string.format("%." .. (numDecimalPlaces or 0) .. "f", num))
 							end
-							done(string.format(Config.Language.banned, "Banned until " .. os.date("%c GMT", round2(_banEnd / 1000)) .. "\nReason: " .. _reason .. ""))
+							done(
+								string.format(
+									Config.Language.banned,
+									"Banned until " .. os.date("%c GMT", round2(_banEnd / 1000)) .. "\nReason: " .. _reason .. ""
+								)
+							)
 							Queue:RemoveFromQueue(ids)
 							Queue:RemoveFromConnecting(ids)
 						end
