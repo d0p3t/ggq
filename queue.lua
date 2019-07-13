@@ -448,13 +448,6 @@ Citizen.CreateThread(
 					string.match(lowerName, "[\\^][1-9]")
 			 then
 				local endpoint = GetPlayerEndpoint(src)
-				local file = io.open(GetResourcePath(GetCurrentResourceName()) .. "/illegals.txt", "a")
-				io.output(file)
-				io.write(
-					"[" ..
-						os.date("%x %X") .. '] Dropped "' .. lowerName .. '" for illegal name [' .. license .. "] [" .. endpoint .. "]\n"
-				)
-				io.close(file)
 				done("Illegal characters found in your name! Remove them and try again.")
 				CancelEvent()
 				return
