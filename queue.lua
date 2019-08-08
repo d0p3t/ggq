@@ -486,8 +486,7 @@ Citizen.CreateThread(
 						fid = "INVALID"
 					end
 
-					exports.ggsql:QueryResultAsync(
-						"SELECT end_date, reason FROM bans WHERE end_date>=@t AND (licenseId=@lid OR steamId=@sid OR xblId=@xid OR liveId=@liveid OR discordId=@did OR fivemId=@fid)",
+					local results = exports.ggsql.QueryResult("SELECT end_date, reason FROM bans WHERE end_date>=@t AND (licenseId=@lid OR steamId=@sid OR xblId=@xid OR liveId=@liveid OR discordId=@did OR fivemId=@fid)",
 						{
 							t = (os.time() * 1000),
 							lid = lid,
@@ -496,28 +495,25 @@ Citizen.CreateThread(
 							liveid = liveid,
 							did = did,
 							fid = fid
-						},
-						function(results)
-							if results[1] == nil then
-								callback(false)
-								return
-							end
+						})
+					if results[1] == nil then
+						callback(false)
+						return
+					end
 
-							local isBanned = false
-							local reason = ""
-							local endDate = 0
-							local now = (os.time() * 1000)
-							for k, ban in ipairs(results) do
-								if ban.end_date > endDate and ban.end_date > now then
-									reason = ban.reason
-									endDate = ban.end_date
-									isBanned = true
-								end
-							end
-
-							callback(isBanned, reason, endDate)
+					local isBanned = false
+					local reason = ""
+					local endDate = 0
+					local now = (os.time() * 1000)
+					for k, ban in ipairs(results) do
+						if ban.end_date > endDate and ban.end_date > now then
+							reason = ban.reason
+							endDate = ban.end_date
+							isBanned = true
 						end
-					)
+					end
+
+					callback(isBanned, reason, endDate)
 				end
 
 				checkBan(
