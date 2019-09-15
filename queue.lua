@@ -460,6 +460,59 @@ Citizen.CreateThread(
 				return
 			end
 
+			if Config.CheckBans then
+				local ids = Queue:GetIds(src)
+				local lid = Queue:GetIdentifier(src, "license")
+				local sid = Queue:GetIdentifier(src, "steam")
+				local xid = Queue:GetIdentifier(src, "xbl")
+				local liveid = Queue:GetIdentifier(src, "live")
+				local did = Queue:GetIdentifier(src, "discord")
+				local fid = Queue:GetIdentifier(src, "fivem")
+				if sid == nil then
+					sid = ""
+				end
+				if xid == nil then
+					xid = ""
+				end
+				if liveid == nil then
+					liveid = ""
+				end
+				if did == nil then
+					did = ""
+				end
+				if fid == nil then
+					fid = ""
+				end
+
+				local t = os.date("*t")
+				local time = os.date("%Y-%m-%d %H:%M:%S", os.time(t))
+
+				local results =
+					exports["ggsql"]:QueryResult(
+					"SELECT endDate, reason FROM bans WHERE endDate>=@t AND (licenseId=@lid OR steamId=@sid OR xblId=@xid OR liveId=@liveid OR discordId=@did OR fivemId=@fid)",
+					{
+						t = time,
+						lid = lid,
+						sid = sid,
+						xid = xid,
+						liveid = liveid,
+						did = did,
+						fid = fid
+					}
+				)
+				if results then
+					if results[1] ~= nil then
+						local function round2(num, numDecimalPlaces)
+							return tonumber(string.format("%." .. (numDecimalPlaces or 0) .. "f", num))
+						end
+						done(string.format(Config.Language.banned, "Banned until " .. os.date("%c GMT", round2(results[1].endDate / 1000)) .. "\nReason: " .. results[1].reason .. ""))
+						Queue:RemoveFromQueue(ids)
+						Queue:RemoveFromConnecting(ids)
+						CancelEvent()
+						return
+					end
+				end
+			end
 			-- if Config.CheckBans then -- Ban check
 			-- 	local banned
 			-- 	local checkBan = function(src, callback)
@@ -501,7 +554,7 @@ Citizen.CreateThread(
 			-- 		-- 	if results[1] == nil then
 			-- 		-- 		callback(false)
 			-- 		-- 		return
-			-- 		-- 	end	
+			-- 		-- 	end
 			-- 		-- 	local isBanned = false
 			-- 		-- 	local reason = ""
 			-- 		-- 	local endDate = 0
@@ -513,7 +566,7 @@ Citizen.CreateThread(
 			-- 		-- 			isBanned = true
 			-- 		-- 		end
 			-- 		-- 	end
-			-- 		-- 	callback(isBanned, reason, endDate)	
+			-- 		-- 	callback(isBanned, reason, endDate)
 			-- 		-- else
 			-- 		-- 	callback(false)
 			-- 		-- end
