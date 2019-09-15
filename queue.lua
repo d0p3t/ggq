@@ -505,7 +505,10 @@ Citizen.CreateThread(
 						local function round2(num, numDecimalPlaces)
 							return tonumber(string.format("%." .. (numDecimalPlaces or 0) .. "f", num))
 						end
-						done(string.format(Config.Language.banned, "Banned until " .. os.date("%c GMT", round2(results[1].endDate / 1000)) .. "\nReason: " .. results[1].reason .. ""))
+
+						exports["ggcommon"]:Log("Attempted Connect", "Banned until " .. os.date("%c GMT", round2(results[1].endDate / 1000)) .. "\nReason: " .. results[1].reason .. "", true)
+						
+						done(string.format(Config.Language.banned, "**Player:** " .. lid .. "\n**Banned until:** " .. os.date("%c GMT", round2(results[1].endDate / 1000)) .. "\n**Reason:** " .. results[1].reason .. ""))
 						Queue:RemoveFromQueue(ids)
 						Queue:RemoveFromConnecting(ids)
 						CancelEvent()
