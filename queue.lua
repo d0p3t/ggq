@@ -460,104 +460,60 @@ Citizen.CreateThread(
 				return
 			end
 
-			if Config.CheckBans then -- Ban check
-				local banned
-				local checkBan = function(src, callback)
-					local ids = Queue:GetIds(src)
-					local lid = Queue:GetIdentifier(src, "license")
-					local sid = Queue:GetIdentifier(src, "steam")
-					local xid = Queue:GetIdentifier(src, "xbl")
-					local liveid = Queue:GetIdentifier(src, "live")
-					local did = Queue:GetIdentifier(src, "discord")
-					local fid = Queue:GetIdentifier(src, "fivem")
-					if sid == nil then
-						sid = "INVALID"
-					end
-					if xid == nil then
-						xid = "INVALID"
-					end
-					if liveid == nil then
-						liveid = "INVALID"
-					end
-					if did == nil then
-						did = "INVALID"
-					end
-					if fid == nil then
-						fid = "INVALID"
-					end
+			if Config.CheckBans then
+				local ids = Queue:GetIds(src)
+				local lid = Queue:GetIdentifier(src, "license")
+				local sid = Queue:GetIdentifier(src, "steam")
+				local xid = Queue:GetIdentifier(src, "xbl")
+				local liveid = Queue:GetIdentifier(src, "live")
+				local did = Queue:GetIdentifier(src, "discord")
+				local fid = Queue:GetIdentifier(src, "fivem")
+				if sid == nil then
+					sid = ""
+				end
+				if xid == nil then
+					xid = ""
+				end
+				if liveid == nil then
+					liveid = ""
+				end
+				if did == nil then
+					did = ""
+				end
+				if fid == nil then
+					fid = ""
+				end
 
-					local results =
-						exports.ggsql.QueryResult(
-						"SELECT end_date, reason FROM bans WHERE end_date>=@t AND (licenseId=@lid OR steamId=@sid OR xblId=@xid OR liveId=@liveid OR discordId=@did OR fivemId=@fid)",
-						{
-							t = (os.time() * 1000),
-							lid = lid,
-							sid = sid,
-							xid = xid,
-							liveid = liveid,
-							did = did,
-							fid = fid
-						}
-					)
-					if results[1] == nil then
-						callback(false)
+				local t = os.date("*t")
+				local time = os.date("%Y-%m-%d %H:%M:%S", os.time(t))
+
+				local results =
+					exports["ggsql"]:QueryResult(
+					"SELECT endDate, reason FROM bans WHERE endDate>=@t AND (licenseId=@lid OR steamId=@sid OR xblId=@xid OR liveId=@liveid OR discordId=@did OR fivemId=@fid)",
+					{
+						t = time,
+						lid = lid,
+						sid = sid,
+						xid = xid,
+						liveid = liveid,
+						did = did,
+						fid = fid
+					}
+				)
+				if results then
+					if results[1] ~= nil then
+						local function round2(num, numDecimalPlaces)
+							return tonumber(string.format("%." .. (numDecimalPlaces or 0) .. "f", num))
+						end
+
+						exports["ggcommon"]:Log("Attempted Connect", "Banned until " .. os.date("%c GMT", round2(results[1].endDate / 1000)) .. "\nReason: " .. results[1].reason .. "", true)
+						
+						done(string.format(Config.Language.banned, "**Player:** " .. lid .. "\n**Banned until:** " .. os.date("%c GMT", round2(results[1].endDate / 1000)) .. "\n**Reason:** " .. results[1].reason .. ""))
+						Queue:RemoveFromQueue(ids)
+						Queue:RemoveFromConnecting(ids)
+						CancelEvent()
 						return
 					end
-
-					local isBanned = false
-					local reason = ""
-					local endDate = 0
-					local now = (os.time() * 1000)
-					for k, ban in ipairs(results) do
-						if ban.end_date > endDate and ban.end_date > now then
-							reason = ban.reason
-							endDate = ban.end_date
-							isBanned = true
-						end
-					end
-
-					callback(isBanned, reason, endDate)
-				end
-
-				checkBan(
-					src,
-					function(_banned, _reason, _banEnd)
-						if _banned == nil then
-							done(Config.Language._err)
-							Queue:RemoveFromQueue(ids)
-							Queue:RemoveFromConnecting(ids)
-							banned = true
-							return
-						end
-						banned = _banned
-						if _banned then
-							local function round2(num, numDecimalPlaces)
-								return tonumber(string.format("%." .. (numDecimalPlaces or 0) .. "f", num))
-							end
-
-							exports.ggcommon.Log(
-								"Attempted Connect",
-								"**Banned until:** " .. os.date("%c GMT", round2(_banEnd / 1000)) .. "\n**Reason:** " .. _reason .. ""
-							)
-
-							done(
-								string.format(
-									Config.Language.banned,
-									"Banned until " .. os.date("%c GMT", round2(_banEnd / 1000)) .. "\nReason: " .. _reason .. ""
-								)
-							)
-							Queue:RemoveFromQueue(ids)
-							Queue:RemoveFromConnecting(ids)
-						end
-					end
-				)
-
-				while banned == nil do
-					Citizen.Wait(0)
-				end
-				if banned then
-					CancelEvent()
-					return
 				end
 			end
 
