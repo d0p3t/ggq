@@ -486,7 +486,9 @@ Citizen.CreateThread(
 						fid = "INVALID"
 					end
 
-					local results = exports.ggsql.QueryResult("SELECT end_date, reason FROM bans WHERE end_date>=@t AND (licenseId=@lid OR steamId=@sid OR xblId=@xid OR liveId=@liveid OR discordId=@did OR fivemId=@fid)",
+					local results =
+						exports.ggsql.QueryResult(
+						"SELECT end_date, reason FROM bans WHERE end_date>=@t AND (licenseId=@lid OR steamId=@sid OR xblId=@xid OR liveId=@liveid OR discordId=@did OR fivemId=@fid)",
 						{
 							t = (os.time() * 1000),
 							lid = lid,
@@ -495,7 +497,8 @@ Citizen.CreateThread(
 							liveid = liveid,
 							did = did,
 							fid = fid
-						})
+						}
+					)
 					if results[1] == nil then
 						callback(false)
 						return
@@ -531,6 +534,12 @@ Citizen.CreateThread(
 							local function round2(num, numDecimalPlaces)
 								return tonumber(string.format("%." .. (numDecimalPlaces or 0) .. "f", num))
 							end
+
+							exports.ggcommon.Log(
+								"Attempted Connect",
+								"**Banned until:** " .. os.date("%c GMT", round2(_banEnd / 1000)) .. "\n**Reason:** " .. _reason .. ""
+							)
+
 							done(
 								string.format(
 									Config.Language.banned,
