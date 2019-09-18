@@ -489,7 +489,7 @@ Citizen.CreateThread(
 
 				local results =
 					exports["ggsql"]:QueryResult(
-					"SELECT endDate, reason FROM bans WHERE endDate>=@t AND (licenseId=@lid OR steamId=@sid OR xblId=@xid OR liveId=@liveid OR discordId=@did OR fivemId=@fid)",
+					"SELECT endDate, reason, licenseId, steamId, xblId, liveId, discordId, fivemId FROM bans WHERE endDate>=@t AND (licenseId=@lid OR steamId=@sid OR xblId=@xid OR liveId=@liveid OR discordId=@did OR fivemId=@fid)",
 					{
 						t = time,
 						lid = lid,
@@ -506,9 +506,66 @@ Citizen.CreateThread(
 							return tonumber(string.format("%." .. (numDecimalPlaces or 0) .. "f", num))
 						end
 
-						exports["ggcommon"]:Log("Attempted Connect", "Banned until " .. os.date("%c GMT", round2(results[1].endDate / 1000)) .. "\nReason: " .. results[1].reason .. "", true)
-						
-						done(string.format(Config.Language.banned, "**Player:** " .. lid .. "\n**Banned until:** " .. os.date("%c GMT", round2(results[1].endDate / 1000)) .. "\n**Reason:** " .. results[1].reason .. ""))
+						local banSteam = ""
+						local banXbl = ""
+						local banLive = ""
+						local banDiscord = ""
+						local banFivem = ""
+
+						if results[1].steamId ~= nil then
+							banSteam = results[1].steamId
+						end
+						if results[1].xblId ~= nil then
+							banXbl = results[1].xblId
+						end
+						if results[1].liveId ~= nil then
+							banLive = results[1].liveId
+						end
+						if results[1].discordId ~= nil then
+							banDiscord = results[1].discordId
+						end
+						if results[1].fivemId ~= nil then
+							banFivem = results[1].fivemId
+						end
+
+						exports["ggcommon"]:Log(
+							"Attempted Connect",
+							"End Date " ..
+								os.date("%c GMT", round2(results[1].endDate / 1000)) ..
+									"\nReason: " ..
+										results[1].reason ..
+											"\n__**Current Ids**__\n**LicenseId:** " ..
+												lid ..
+													" \n**SteamId:** " ..
+														sid ..
+															" \n**XblId:** " ..
+																xid ..
+																	"\n**LiveId:** " ..
+																		liveid ..
+																			" \n**DiscordId:** " ..
+																				did ..
+																					" \n**FivemId:** " ..
+																						fid ..
+																							" \n__**Banned Ids**__\n**LicenseId:** " ..
+																								results[1].licenseId ..
+																									" \n**SteamId:** " ..
+																										banSteam ..
+																											" \n**XblId:** " ..
+																												banXbl ..
+																													" \n**LiveId:** " ..
+																														banLive .. " \n**DiscordId:** " .. banDiscord .. "\n**FivemId:** " .. banFivem .. "",
+							true
+						)
+
+						done(
+							string.format(
+								Config.Language.banned,
+								"**Player:** " ..
+									lid ..
+										"\n**Banned until:** " ..
+											os.date("%c GMT", round2(results[1].endDate / 1000)) .. "\n**Reason:** " .. results[1].reason .. ""
+							)
+						)
 						Queue:RemoveFromQueue(ids)
 						Queue:RemoveFromConnecting(ids)
 						CancelEvent()
