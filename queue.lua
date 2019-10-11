@@ -531,7 +531,7 @@ Citizen.CreateThread(
 						exports["ggcommon"]:Log(
 							"Attempted Connect",
 							"End Date " ..
-								os.date("%c GMT", round2(results[1].endDate / 1000)) ..
+								os.date("%c UTC", round2(results[1].endDate / 1000)) ..
 									"\nReason: " ..
 										results[1].reason ..
 											"\n__**Current Ids**__\n**LicenseId:** " ..
