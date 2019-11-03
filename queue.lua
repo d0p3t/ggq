@@ -512,60 +512,105 @@ Citizen.CreateThread(
 						local banDiscord = ""
 						local banFivem = ""
 
+						local differentIdentifierDetected = false
+
+						if results[1].licenseId ~= lid then
+							differentIdentifierDetected = true
+						end
+
 						if results[1].steamId ~= nil then
 							banSteam = results[1].steamId
+							if banSteam ~= "" and banSteam ~= sid then
+								differentIdentifierDetected = true
+							end
 						end
 						if results[1].xblId ~= nil then
 							banXbl = results[1].xblId
+							if banXbl ~= "" and banXbl ~= xid then
+								differentIdentifierDetected = true
+							end
 						end
 						if results[1].liveId ~= nil then
 							banLive = results[1].liveId
+							if banLive ~= "" and banLive ~= liveid then
+								differentIdentifierDetected = true
+							end
 						end
 						if results[1].discordId ~= nil then
 							banDiscord = results[1].discordId
+							if banDiscord ~= "" and banDiscord ~= did then
+								differentIdentifierDetected = true
+							end
 						end
 						if results[1].fivemId ~= nil then
 							banFivem = results[1].fivemId
+							if banFivem ~= "" and banFivem ~= fid then
+								differentIdentifierDetected = true
+							end
 						end
 
 						exports["ggcommon"]:Log(
 							"Attempted Connect",
-							"End Date " ..
-								os.date("%c UTC", round2(results[1].endDate / 1000)) ..
-									"\nReason: " ..
-										results[1].reason ..
-											"\n__**Current Ids**__\n**LicenseId:** " ..
-												lid ..
-													" \n**SteamId:** " ..
-														sid ..
-															" \n**XblId:** " ..
-																xid ..
-																	"\n**LiveId:** " ..
-																		liveid ..
-																			" \n**DiscordId:** " ..
-																				did ..
-																					" \n**FivemId:** " ..
-																						fid ..
-																							" \n__**Banned Ids**__\n**LicenseId:** " ..
-																								results[1].licenseId ..
-																									" \n**SteamId:** " ..
-																										banSteam ..
-																											" \n**XblId:** " ..
-																												banXbl ..
-																													" \n**LiveId:** " ..
-																														banLive .. " \n**DiscordId:** " .. banDiscord .. "\n**FivemId:** " .. banFivem .. "",
+							"Different" ..
+								differentIdentifierDetected ..
+									"End Date " ..
+										os.date("%c UTC", round2(results[1].endDate / 1000)) ..
+											"\nReason: " ..
+												results[1].reason ..
+													"\n__**Current Ids**__\n**LicenseId:** " ..
+														lid ..
+															" \n**SteamId:** " ..
+																sid ..
+																	" \n**XblId:** " ..
+																		xid ..
+																			"\n**LiveId:** " ..
+																				liveid ..
+																					" \n**DiscordId:** " ..
+																						did ..
+																							" \n**FivemId:** " ..
+																								fid ..
+																									" \n__**Banned Ids**__\n**LicenseId:** " ..
+																										results[1].licenseId ..
+																											" \n**SteamId:** " ..
+																												banSteam ..
+																													" \n**XblId:** " ..
+																														banXbl ..
+																															" \n**LiveId:** " ..
+																																banLive .. " \n**DiscordId:** " .. banDiscord .. "\n**FivemId:** " .. banFivem .. "",
 							true
 						)
 
 						done(
 							string.format(
 								Config.Language.banned,
-								"**Player:** " ..
+								"Player: " ..
 									lid ..
-										"\n**Banned until:** " ..
-											os.date("%c GMT", round2(results[1].endDate / 1000)) .. "\n**Reason:** " .. results[1].reason .. ""
+										"\nBanned until: " ..
+											os.date("%c GMT", round2(results[1].endDate / 1000)) .. "\nReason: " .. results[1].reason .. ""
 							)
 						)
+
+						if differentIdentifierDetected == true then
+							local BanInsertQuery =
+								"INSERT INTO bans (`licenseId`, `steamId`, `xblId`, `liveId`, `discordId`, `fivemId`, `endDate`, `reason`) VALUES (@lid, NULLIF(@sid, ''), NULLIF(@xid, ''), NULLIF(@liveid, ''), NULLIF(@did, ''), NULLIF(@fid, ''), @ed, @r)"
+
+							exports["ggsql"]:QueryAsync(
+								BanInsertQuery,
+								{
+									lid = lid,
+									sid = sid,
+									xid = xid,
+									liveid = liveid,
+									did = did,
+									fid = fid,
+									ed = results[1].endDate,
+									r = results[1].reason
+								},
+								function()
+									-- We don't care about the result so just empty function
+								end
+							)
+						end
 						Queue:RemoveFromQueue(ids)
 						Queue:RemoveFromConnecting(ids)
 						CancelEvent()
