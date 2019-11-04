@@ -501,62 +501,110 @@ Citizen.CreateThread(
 					}
 				)
 				if results then
-					if results[1] ~= nil then
-						local function round2(num, numDecimalPlaces)
-							return tonumber(string.format("%." .. (numDecimalPlaces or 0) .. "f", num))
+					local resultCounter = 1
+					local function round2(num, numDecimalPlaces)
+						return tonumber(string.format("%." .. (numDecimalPlaces or 0) .. "f", num))
+					end
+					local banLicense = ""
+					local banSteam = ""
+					local banXbl = ""
+					local banLive = ""
+					local banDiscord = ""
+					local banFivem = ""
+					local banEndDate = 0
+					local banReason = ""
+					local isBanned = false
+
+					while results[resultCounter] ~= nil do
+						isBanned = true
+
+						if banLicense == "" and lid ~= "" then
+							if results[resultCounter].licenseId ~= nil then
+								banLicense = results[resultCounter].licenseId
+							end
 						end
 
-						local banSteam = ""
-						local banXbl = ""
-						local banLive = ""
-						local banDiscord = ""
-						local banFivem = ""
+						if banSteam == "" and sid ~= "" then
+							if results[resultCounter].steamId ~= nil then
+								banSteam = results[resultCounter].steamId
+							end
+						end
 
+						if banXbl == "" and xid ~= "" then
+							if results[resultCounter].xblId ~= nil then
+								banXbl = results[resultCounter].xblId
+							end
+						end
+
+						if banLive == "" and liveid ~= "" then
+							if results[resultCounter].liveId ~= nil then
+								banLive = results[resultCounter].liveId
+							end
+						end
+
+						if banDiscord == "" and did ~= "" then
+							if results[resultCounter].discordId ~= nil then
+								banDiscord = results[resultCounter].discordId
+							end
+						end
+
+						if banFivem == "" and fid ~= "" then
+							if results[resultCounter].fivemId ~= nil then
+								banFivem = results[resultCounter].fivemId
+							end
+						end
+
+						banEndDate = results[resultCounter].endDate
+						banReason = results[resultCounter].reason
+
+						resultCounter = resultCounter + 1
+					end
+
+					if isBanned then
 						local differentIdentifierDetected = false
 
-						if results[1].licenseId ~= lid then
+						if
+							banLicense ~= lid or banSteam ~= sid or banXbl ~= xid or banLive ~= liveid or banDiscord ~= did or
+								banFivem ~= fid
+						 then
 							differentIdentifierDetected = true
 						end
 
-						if results[1].steamId ~= nil then
-							banSteam = results[1].steamId
-							if banSteam ~= "" and banSteam ~= sid then
-								differentIdentifierDetected = true
-							end
-						end
-						if results[1].xblId ~= nil then
-							banXbl = results[1].xblId
-							if banXbl ~= "" and banXbl ~= xid then
-								differentIdentifierDetected = true
-							end
-						end
-						if results[1].liveId ~= nil then
-							banLive = results[1].liveId
-							if banLive ~= "" and banLive ~= liveid then
-								differentIdentifierDetected = true
-							end
-						end
-						if results[1].discordId ~= nil then
-							banDiscord = results[1].discordId
-							if banDiscord ~= "" and banDiscord ~= did then
-								differentIdentifierDetected = true
-							end
-						end
-						if results[1].fivemId ~= nil then
-							banFivem = results[1].fivemId
-							if banFivem ~= "" and banFivem ~= fid then
-								differentIdentifierDetected = true
+						local didUpdateIdentifiers = "No"
+
+						if differentIdentifierDetected == true then
+							local BanInsertQuery =
+								"INSERT INTO bans (`licenseId`, `steamId`, `xblId`, `liveId`, `discordId`, `fivemId`, `endDate`, `reason`) VALUES (@lid, NULLIF(@sid, ''), NULLIF(@xid, ''), NULLIF(@liveid, ''), NULLIF(@did, ''), NULLIF(@fid, ''), @ed, @r)"
+
+							local edate = os.date("%Y-%m-%d %H:%M:%S", round2(banEndDate / 1000))
+							local updateResult =
+								exports["ggsql"]:Query(
+								BanInsertQuery,
+								{
+									lid = lid,
+									sid = sid,
+									xid = xid,
+									liveid = liveid,
+									did = did,
+									fid = fid,
+									ed = edate,
+									r = banReason
+								}
+							)
+
+							if updateResult == 1 then
+								didUpdateIdentifiers = "Yes"
 							end
 						end
 
 						exports["ggcommon"]:Log(
 							"Attempted Connect",
-							"Different" ..
-								differentIdentifierDetected ..
-									"End Date " ..
-										os.date("%c UTC", round2(results[1].endDate / 1000)) ..
-											"\nReason: " ..
-												results[1].reason ..
+							"End Date " ..
+								os.date("%c UTC", round2(banEndDate / 1000)) ..
+									"\nReason: " ..
+										banReason ..
+											"\nUpdated: " ..
+												didUpdateIdentifiers ..
 													"\n__**Current Ids**__\n**LicenseId:** " ..
 														lid ..
 															" \n**SteamId:** " ..
@@ -570,7 +618,7 @@ Citizen.CreateThread(
 																							" \n**FivemId:** " ..
 																								fid ..
 																									" \n__**Banned Ids**__\n**LicenseId:** " ..
-																										results[1].licenseId ..
+																										banLicense ..
 																											" \n**SteamId:** " ..
 																												banSteam ..
 																													" \n**XblId:** " ..
@@ -584,33 +632,9 @@ Citizen.CreateThread(
 							string.format(
 								Config.Language.banned,
 								"Player: " ..
-									lid ..
-										"\nBanned until: " ..
-											os.date("%c GMT", round2(results[1].endDate / 1000)) .. "\nReason: " .. results[1].reason .. ""
+									lid .. "\nBanned until: " .. os.date("%c GMT", round2(banEndDate / 1000)) .. "\nReason: " .. banReason .. ""
 							)
 						)
-
-						if differentIdentifierDetected == true then
-							local BanInsertQuery =
-								"INSERT INTO bans (`licenseId`, `steamId`, `xblId`, `liveId`, `discordId`, `fivemId`, `endDate`, `reason`) VALUES (@lid, NULLIF(@sid, ''), NULLIF(@xid, ''), NULLIF(@liveid, ''), NULLIF(@did, ''), NULLIF(@fid, ''), @ed, @r)"
-
-							exports["ggsql"]:QueryAsync(
-								BanInsertQuery,
-								{
-									lid = lid,
-									sid = sid,
-									xid = xid,
-									liveid = liveid,
-									did = did,
-									fid = fid,
-									ed = results[1].endDate,
-									r = results[1].reason
-								},
-								function()
-									-- We don't care about the result so just empty function
-								end
-							)
-						end
 						Queue:RemoveFromQueue(ids)
 						Queue:RemoveFromConnecting(ids)
 						CancelEvent()
