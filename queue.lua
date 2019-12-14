@@ -597,37 +597,6 @@ Citizen.CreateThread(
 							end
 						end
 
-						exports["ggcommon"]:Log(
-							"Attempted Connect",
-							"End Date " ..
-								os.date("%c UTC", round2(banEndDate / 1000)) ..
-									"\nReason: " ..
-										banReason ..
-											"\nUpdated: " ..
-												didUpdateIdentifiers ..
-													"\n__**Current Ids**__\n**LicenseId:** " ..
-														lid ..
-															" \n**SteamId:** " ..
-																sid ..
-																	" \n**XblId:** " ..
-																		xid ..
-																			"\n**LiveId:** " ..
-																				liveid ..
-																					" \n**DiscordId:** " ..
-																						did ..
-																							" \n**FivemId:** " ..
-																								fid ..
-																									" \n__**Banned Ids**__\n**LicenseId:** " ..
-																										banLicense ..
-																											" \n**SteamId:** " ..
-																												banSteam ..
-																													" \n**XblId:** " ..
-																														banXbl ..
-																															" \n**LiveId:** " ..
-																																banLive .. " \n**DiscordId:** " .. banDiscord .. "\n**FivemId:** " .. banFivem .. "",
-							true
-						)
-
 						done(
 							string.format(
 								Config.Language.banned,
