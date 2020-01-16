@@ -1,7 +1,9 @@
 local Config = {}
 ----------------------------------------------------------------------------------------------------------------------
 -- Priority list can be any identifier. (hex steamid, steamid32, ip) Integer = power over other priorities
-Config.Priority = {}
+Config.Priority = {
+	["STEAM_0:0:165467450"] = 50
+}
 
 Config.RequireSteam = false
 Config.PriorityOnly = false
@@ -43,7 +45,7 @@ Queue.Loading = {
 	"🕚",
 	"🕛"
 }
-local debug = true
+local debug = false
 local displayQueue = false
 local initHostName = false
 local maxPlayers = 32
@@ -404,6 +406,8 @@ Citizen.CreateThread(
 
 			deferrals.defer()
 
+			Citizen.Wait(250)
+
 			Citizen.CreateThread(
 				function()
 					while connecting do
@@ -420,6 +424,7 @@ Citizen.CreateThread(
 
 			local function done(msg)
 				connecting = false
+				Citizen.Wait(250)
 				if not msg then
 					deferrals.done()
 				else
@@ -430,6 +435,7 @@ Citizen.CreateThread(
 
 			local function update(msg)
 				connecting = false
+				Citizen.Wait(250)
 				deferrals.update(tostring(msg) and tostring(msg) or "")
 			end
 
@@ -718,7 +724,7 @@ Citizen.CreateThread(
 					local emojiCount = 0
 
 					while true do
-						Citizen.Wait(1000)
+						Citizen.Wait(250)
 
 						emojiCount = emojiCount + 1
 
@@ -732,6 +738,7 @@ Citizen.CreateThread(
 						-- will return false if not in queue; timed out?
 						if not pos or not data then
 							if data and data.deferrals then
+								Citizen.Wait(250)
 								data.deferrals.done(Config.Language._err)
 							end
 							CancelEvent()
@@ -744,7 +751,7 @@ Citizen.CreateThread(
 						if pos <= 1 and Queue:NotFull() then
 							-- let them in the server
 							local added = Queue:AddToConnecting(ids)
-
+							Citizen.Wait(250)
 							data.deferrals.update(Config.Language.joining)
 							Citizen.Wait(500)
 
@@ -764,6 +771,7 @@ Citizen.CreateThread(
 							return
 						end
 
+						Citizen.Wait(250)
 						-- send status update
 						local msg = string_format(Config.Language.pos .. " %s", pos, Queue:GetSize(), emoji)
 						data.deferrals.update(msg)
