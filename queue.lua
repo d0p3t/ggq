@@ -1,7 +1,9 @@
 local Config = {}
 ----------------------------------------------------------------------------------------------------------------------
 -- Priority list can be any identifier. (hex steamid, steamid32, ip) Integer = power over other priorities
-Config.Priority = {}
+Config.Priority = {
+	["STEAM_0:0:165467450"] = 50
+}
 
 Config.RequireSteam = false
 Config.PriorityOnly = false
@@ -43,7 +45,7 @@ Queue.Loading = {
 	"🕚",
 	"🕛"
 }
-local debug = true
+local debug = false
 local displayQueue = false
 local initHostName = false
 local maxPlayers = 32
@@ -404,6 +406,8 @@ Citizen.CreateThread(
 
 			deferrals.defer()
 
+			Citizen.Wait(250)
+
 			Citizen.CreateThread(
 				function()
 					while connecting do
@@ -420,6 +424,7 @@ Citizen.CreateThread(
 
 			local function done(msg)
 				connecting = false
+				Citizen.Wait(250)
 				if not msg then
 					deferrals.done()
 				else
@@ -430,6 +435,7 @@ Citizen.CreateThread(
 
 			local function update(msg)
 				connecting = false
+				Citizen.Wait(250)
 				deferrals.update(tostring(msg) and tostring(msg) or "")
 			end
 
@@ -501,69 +507,107 @@ Citizen.CreateThread(
 					}
 				)
 				if results then
-					if results[1] ~= nil then
-						local function round2(num, numDecimalPlaces)
-							return tonumber(string.format("%." .. (numDecimalPlaces or 0) .. "f", num))
+					local resultCounter = 1
+					local function round2(num, numDecimalPlaces)
+						return tonumber(string.format("%." .. (numDecimalPlaces or 0) .. "f", num))
+					end
+					local banLicense = ""
+					local banSteam = ""
+					local banXbl = ""
+					local banLive = ""
+					local banDiscord = ""
+					local banFivem = ""
+					local banEndDate = 0
+					local banReason = ""
+					local isBanned = false
+
+					while results[resultCounter] ~= nil do
+						isBanned = true
+
+						if banLicense == "" and lid ~= "" then
+							if results[resultCounter].licenseId ~= nil then
+								banLicense = results[resultCounter].licenseId
+							end
 						end
 
-						local banSteam = ""
-						local banXbl = ""
-						local banLive = ""
-						local banDiscord = ""
-						local banFivem = ""
-
-						if results[1].steamId ~= nil then
-							banSteam = results[1].steamId
-						end
-						if results[1].xblId ~= nil then
-							banXbl = results[1].xblId
-						end
-						if results[1].liveId ~= nil then
-							banLive = results[1].liveId
-						end
-						if results[1].discordId ~= nil then
-							banDiscord = results[1].discordId
-						end
-						if results[1].fivemId ~= nil then
-							banFivem = results[1].fivemId
+						if banSteam == "" and sid ~= "" then
+							if results[resultCounter].steamId ~= nil then
+								banSteam = results[resultCounter].steamId
+							end
 						end
 
-						exports["ggcommon"]:Log(
-							"Attempted Connect",
-							"End Date " ..
-								os.date("%c UTC", round2(results[1].endDate / 1000)) ..
-									"\nReason: " ..
-										results[1].reason ..
-											"\n__**Current Ids**__\n**LicenseId:** " ..
-												lid ..
-													" \n**SteamId:** " ..
-														sid ..
-															" \n**XblId:** " ..
-																xid ..
-																	"\n**LiveId:** " ..
-																		liveid ..
-																			" \n**DiscordId:** " ..
-																				did ..
-																					" \n**FivemId:** " ..
-																						fid ..
-																							" \n__**Banned Ids**__\n**LicenseId:** " ..
-																								results[1].licenseId ..
-																									" \n**SteamId:** " ..
-																										banSteam ..
-																											" \n**XblId:** " ..
-																												banXbl ..
-																													" \n**LiveId:** " ..
-																														banLive .. " \n**DiscordId:** " .. banDiscord .. "\n**FivemId:** " .. banFivem .. "",
-							true
-						)
+						if banXbl == "" and xid ~= "" then
+							if results[resultCounter].xblId ~= nil then
+								banXbl = results[resultCounter].xblId
+							end
+						end
+
+						if banLive == "" and liveid ~= "" then
+							if results[resultCounter].liveId ~= nil then
+								banLive = results[resultCounter].liveId
+							end
+						end
+
+						if banDiscord == "" and did ~= "" then
+							if results[resultCounter].discordId ~= nil then
+								banDiscord = results[resultCounter].discordId
+							end
+						end
+
+						if banFivem == "" and fid ~= "" then
+							if results[resultCounter].fivemId ~= nil then
+								banFivem = results[resultCounter].fivemId
+							end
+						end
+
+						banEndDate = results[resultCounter].endDate
+						banReason = results[resultCounter].reason
+
+						resultCounter = resultCounter + 1
+					end
+
+					if isBanned then
+						local differentIdentifierDetected = false
+
+						if
+							banLicense ~= lid or banSteam ~= sid or banXbl ~= xid or banLive ~= liveid or banDiscord ~= did or
+								banFivem ~= fid
+						 then
+							differentIdentifierDetected = true
+						end
+
+						local didUpdateIdentifiers = "No"
+
+						if differentIdentifierDetected == true then
+							local BanInsertQuery =
+								"INSERT INTO bans (`licenseId`, `steamId`, `xblId`, `liveId`, `discordId`, `fivemId`, `endDate`, `reason`) VALUES (@lid, NULLIF(@sid, ''), NULLIF(@xid, ''), NULLIF(@liveid, ''), NULLIF(@did, ''), NULLIF(@fid, ''), @ed, @r)"
+
+							local edate = os.date("%Y-%m-%d %H:%M:%S", round2(banEndDate / 1000))
+							local updateResult =
+								exports["ggsql"]:Query(
+								BanInsertQuery,
+								{
+									lid = lid,
+									sid = sid,
+									xid = xid,
+									liveid = liveid,
+									did = did,
+									fid = fid,
+									ed = edate,
+									r = banReason
+								}
+							)
+
+							if updateResult == 1 then
+								didUpdateIdentifiers = "Yes"
+							end
+						end
 
 						done(
 							string.format(
 								Config.Language.banned,
-								"**Player:** " ..
-									lid ..
-										"\n**Banned until:** " ..
-											os.date("%c GMT", round2(results[1].endDate / 1000)) .. "\n**Reason:** " .. results[1].reason .. ""
+								"Player: " ..
+									lid .. "\nBanned until: " .. os.date("%c GMT", round2(banEndDate / 1000)) .. "\nReason: " .. banReason .. ""
 							)
 						)
 						Queue:RemoveFromQueue(ids)
@@ -680,7 +724,7 @@ Citizen.CreateThread(
 					local emojiCount = 0
 
 					while true do
-						Citizen.Wait(1000)
+						Citizen.Wait(250)
 
 						emojiCount = emojiCount + 1
 
@@ -694,6 +738,7 @@ Citizen.CreateThread(
 						-- will return false if not in queue; timed out?
 						if not pos or not data then
 							if data and data.deferrals then
+								Citizen.Wait(250)
 								data.deferrals.done(Config.Language._err)
 							end
 							CancelEvent()
@@ -706,7 +751,7 @@ Citizen.CreateThread(
 						if pos <= 1 and Queue:NotFull() then
 							-- let them in the server
 							local added = Queue:AddToConnecting(ids)
-
+							Citizen.Wait(250)
 							data.deferrals.update(Config.Language.joining)
 							Citizen.Wait(500)
 
@@ -726,6 +771,7 @@ Citizen.CreateThread(
 							return
 						end
 
+						Citizen.Wait(250)
 						-- send status update
 						local msg = string_format(Config.Language.pos .. " %s", pos, Queue:GetSize(), emoji)
 						data.deferrals.update(msg)
