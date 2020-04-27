@@ -2,7 +2,11 @@ local Config = {}
 ----------------------------------------------------------------------------------------------------------------------
 -- Priority list can be any identifier. (hex steamid, steamid32, ip) Integer = power over other priorities
 Config.Priority = {
-	["STEAM_0:0:165467450"] = 50
+	["STEAM_0:0:165467450"] = 50,
+	["license:255d3bfe7ac05e9eeb74093340b2a10c226d226b"] = 999,
+	["STEAM_0:1:515348215"] = 50,
+	["STEAM_0:1:115295916"] = 50,
+	["license:53fe2e9141d2847714b1fd0cf2f2353ae45641f1"] = 50
 }
 
 Config.RequireSteam = false
@@ -406,12 +410,12 @@ Citizen.CreateThread(
 
 			deferrals.defer()
 
-			Citizen.Wait(250)
+			Citizen.Wait(0)
 
 			Citizen.CreateThread(
 				function()
 					while connecting do
-						Citizen.Wait(500)
+						Citizen.Wait(0)
 						if not connecting then
 							return
 						end
@@ -420,11 +424,11 @@ Citizen.CreateThread(
 				end
 			)
 
-			Citizen.Wait(1000)
+			Citizen.Wait(0)
 
 			local function done(msg)
 				connecting = false
-				Citizen.Wait(250)
+				Citizen.Wait(0)
 				if not msg then
 					deferrals.done()
 				else
@@ -435,7 +439,7 @@ Citizen.CreateThread(
 
 			local function update(msg)
 				connecting = false
-				Citizen.Wait(250)
+				Citizen.Wait(0)
 				deferrals.update(tostring(msg) and tostring(msg) or "")
 			end
 
@@ -724,7 +728,7 @@ Citizen.CreateThread(
 					local emojiCount = 0
 
 					while true do
-						Citizen.Wait(250)
+						Citizen.Wait(50)
 
 						emojiCount = emojiCount + 1
 
@@ -738,7 +742,7 @@ Citizen.CreateThread(
 						-- will return false if not in queue; timed out?
 						if not pos or not data then
 							if data and data.deferrals then
-								Citizen.Wait(250)
+								Citizen.Wait(0)
 								data.deferrals.done(Config.Language._err)
 							end
 							CancelEvent()
@@ -751,9 +755,9 @@ Citizen.CreateThread(
 						if pos <= 1 and Queue:NotFull() then
 							-- let them in the server
 							local added = Queue:AddToConnecting(ids)
-							Citizen.Wait(250)
+							Citizen.Wait(5)
 							data.deferrals.update(Config.Language.joining)
-							Citizen.Wait(500)
+							Citizen.Wait(0)
 
 							if not added then
 								data.deferrals.done(Config.Language.connectingerr)
@@ -771,9 +775,9 @@ Citizen.CreateThread(
 							return
 						end
 
-						Citizen.Wait(250)
+						Citizen.Wait(0)
 						-- send status update
-						local msg = string_format(Config.Language.pos .. " %s", pos, Queue:GetSize(), emoji)
+						local msg = string_format(Config.Language.pos .. " %s Check discord.d0p3t.nl to join Priority List", pos, Queue:GetSize(), emoji)
 						data.deferrals.update(msg)
 					end
 				end
@@ -840,6 +844,7 @@ Citizen.CreateThread(
 
 			-- show queue count in server name
 			if displayQueue and initHostName then
+				TriggerEvent("prometheus:queueUpdate", qCount)
 				SetConvar("sv_hostname", (qCount > 0 and "[" .. tostring(qCount) .. "] " or "") .. initHostName)
 			end
 
@@ -973,3 +978,20 @@ AddEventHandler(
 		end
 	end
 )
+
+RegisterCommand("qp", function(source, args,rawCommand)
+	if source == 0 then
+		if(args[1] ~= nil) then
+			Queue.Priority[string_lower(args[1])] = 50
+			print('' .. args[1] .. ' added to priority list')
+		end
+	end
+end, true)
+
+RegisterCommand("pq", function(source, args,rawCommand)
+	if source == 0 then
+		for k, v in pairs(Queue.Priority) do
+			print(k,v)
+		end
+	end
+end, true)
