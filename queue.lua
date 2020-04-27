@@ -3,7 +3,10 @@ local Config = {}
 -- Priority list can be any identifier. (hex steamid, steamid32, ip) Integer = power over other priorities
 Config.Priority = {
 	["STEAM_0:0:165467450"] = 50,
-	["license:255d3bfe7ac05e9eeb74093340b2a10c226d226b"] = 999
+	["license:255d3bfe7ac05e9eeb74093340b2a10c226d226b"] = 999,
+	["STEAM_0:1:515348215"] = 50,
+	["STEAM_0:1:115295916"] = 50,
+	["license:53fe2e9141d2847714b1fd0cf2f2353ae45641f1"] = 50
 }
 
 Config.RequireSteam = false
