@@ -64,3 +64,24 @@ RegisterCommand(
   end,
   true
 )
+
+RegisterCommand('removeprio', function(source,args,raw)
+  if source ~= 0 then return end
+
+  if #args ~= 1 then
+    Utils.DebugPrint('Must only specify identifier to remove')
+    return
+  end
+
+  local identifier = args[1]
+
+  Queue.RemovePriority(identifier)
+
+  exports["ggsql"]:QueryAsync("DELETE FROM queue WHERE manualIdentifier=@mid", {
+    mid = tostring(identifier)
+  }, function(result)
+    if result < 1 then
+      -- find by userid. use one sql transaction with DECLARE and shizzle
+    end
+  end)
+end, true)
