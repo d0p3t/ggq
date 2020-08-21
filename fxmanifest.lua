@@ -1,7 +1,7 @@
 fx_version "adamant"
 game "gta5"
 
-dependency "connectqueue"
+dependency "queue"
 dependency "ggsql"
 
 server_scripts {
@@ -9,6 +9,6 @@ server_scripts {
 }
 
 server_scripts {
-  "@connectqueue/connectqueue.lua",
+  "@queue/queue.lua",
   "server/modules/*.lua"
 }
