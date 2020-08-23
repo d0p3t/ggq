@@ -14,22 +14,48 @@ Citizen.CreateThread(
         local liveId = ""
         local discordId = ""
         local fivemId = ""
+        local lUserId = ""
+        local sUserId = ""
+        local xUserId = ""
+        local liveUserId = ""
+        local dUserId = ""
+        local fUserId = ""
 
         for _, id in ipairs(ids) do
           if string_sub(id, 1, 8) == "license:" then
             licenseId = id
+            lUserId = id:gsub(".*:", "")
           elseif string_sub(id, 1, 6) == "steam:" then
             steamId = id
+            sUserId = id:gsub(".*:", "")
           elseif string_sub(id, 1, 4) == "xbl:" then
             xblId = id
+            xUserId = id:gsub(".*:", "")
           elseif string_sub(id, 1, 5) == "live:" then
             liveId = id
+            liveUserId = id:gsub(".*:", "")
           elseif string_sub(id, 1, 8) == "discord:" then
             discordId = id
+            dUserId = id:gsub(".*:", "")
           elseif string_sub(id, 1, 6) == "fivem:" then
             fivemId = id
+            fUserId = id:gsub(".*:", "")
           end
         end
+
+        exports["ggsql"]:QueryAsync(
+          "UPDATE users SET fivemId=@fid WHERE licenseId=@lid OR steamId=@sid OR xblId=@xid OR liveId=@liveid OR discordId=@did",
+          {
+            lid = lUserId,
+            sid = sUserId,
+            xid = xUserId,
+            liveid = liveUserId,
+            did = dUserId,
+            fid = fUserId
+          },
+          function(updateResult)
+          end
+        )
 
         local t = os.date("*t")
         local time = os.date("%Y-%m-%d %H:%M:%S", os.time(t))

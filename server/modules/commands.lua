@@ -29,7 +29,7 @@ RegisterCommand(
     local identifier = manualIdentifier:gsub(".*:", "")
     local results =
       exports["ggsql"]:QueryResult(
-      "SELECT id FROM users WHERE licenseId=@lid OR steamId=@lid OR discordId=@lid",
+      "SELECT id FROM users WHERE licenseId=@lid OR steamId=@lid OR discordId=@lid OR fivemId=@lid",
       {
         lid = identifier
       }
@@ -85,3 +85,43 @@ RegisterCommand('removeprio', function(source,args,raw)
     end
   end)
 end, true)
+
+RegisterCommand("sponsorrewards", function(source, args,raw)
+  if source ~= 0 then return end
+
+  if #args ~= 3 then
+    Utils.DebugPrint("Must specify [identifier] [xp] [money]")
+    return
+  end
+
+  local manualIdentifier = tostring(args[1])
+  local addXP = tonumber(args[2])
+  local addMoney = tonumber(args[3])
+
+  local identifier = manualIdentifier:gsub(".*:", "")
+  local results =
+    exports["ggsql"]:QueryResult(
+    "SELECT id, xp, money FROM users WHERE licenseId=@lid OR steamId=@lid OR discordId=@lid OR fivemId=@lid",
+    {
+      lid = identifier
+    }
+  )  
+
+  if not results[1] then
+    Utils.DebugPrint("Could not find user with identifier: " .. manualIdentifier)
+    return
+  end
+
+  local user = results[1]
+  exports["ggsql"]:QueryAsync("UPDATE users SET xp=@xp, money=@money, donator=1 WHERE id=@id", {
+    xp = user.xp + addXP,
+    money = user.money + addMoney,
+    id = user.id
+  }, function(updateResult)
+    if updateResult == 1 then
+      Utils.DebugPrint("Successfully added " .. tostring(addXP) .. "XP and $" .. tostring(addMoney) .. " to user " .. tostring(user.id))
+    else
+      Utils.DebugPrint("Something went wrong updating " .. tostring(user.id))
+    end   
+  end)
+end,true)
