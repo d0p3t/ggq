@@ -57,71 +57,95 @@ RegisterCommand(
         elseif result > 1 then
           Utils.DebugPrint("Updated player queue priority in DB")
         end
+        Queue.AddPriority(manualIdentifier, priority)
       end
     )
-
-    Queue.AddPriority(manualIdentifier, priority)
   end,
   true
 )
 
-RegisterCommand('removeprio', function(source,args,raw)
-  if source ~= 0 then return end
-
-  if #args ~= 1 then
-    Utils.DebugPrint('Must only specify identifier to remove')
-    return
-  end
-
-  local identifier = args[1]
-
-  Queue.RemovePriority(identifier)
-
-  exports["ggsql"]:QueryAsync("DELETE FROM queue WHERE manualIdentifier=@mid", {
-    mid = tostring(identifier)
-  }, function(result)
-    if result < 1 then
-      -- find by userid. use one sql transaction with DECLARE and shizzle
+RegisterCommand(
+  "removeprio",
+  function(source, args, raw)
+    if source ~= 0 then
+      return
     end
-  end)
-end, true)
 
-RegisterCommand("sponsorrewards", function(source, args,raw)
-  if source ~= 0 then return end
+    if #args ~= 1 then
+      Utils.DebugPrint("Must only specify identifier to remove")
+      return
+    end
 
-  if #args ~= 3 then
-    Utils.DebugPrint("Must specify [identifier] [xp] [money]")
-    return
-  end
+    local identifier = args[1]
 
-  local manualIdentifier = tostring(args[1])
-  local addXP = tonumber(args[2])
-  local addMoney = tonumber(args[3])
+    Queue.RemovePriority(identifier)
 
-  local identifier = manualIdentifier:gsub(".*:", "")
-  local results =
-    exports["ggsql"]:QueryResult(
-    "SELECT id, xp, money FROM users WHERE licenseId=@lid OR steamId=@lid OR discordId=@lid OR fivemId=@lid",
-    {
-      lid = identifier
-    }
-  )  
+    exports["ggsql"]:QueryAsync(
+      "DELETE FROM queue WHERE manualIdentifier=@mid",
+      {
+        mid = tostring(identifier)
+      },
+      function(result)
+        if result < 1 then
+        -- find by userid. use one sql transaction with DECLARE and shizzle
+        end
+      end
+    )
+  end,
+  true
+)
 
-  if not results[1] then
-    Utils.DebugPrint("Could not find user with identifier: " .. manualIdentifier)
-    return
-  end
+RegisterCommand(
+  "sponsorrewards",
+  function(source, args, raw)
+    if source ~= 0 then
+      return
+    end
 
-  local user = results[1]
-  exports["ggsql"]:QueryAsync("UPDATE users SET xp=@xp, money=@money, donator=1 WHERE id=@id", {
-    xp = user.xp + addXP,
-    money = user.money + addMoney,
-    id = user.id
-  }, function(updateResult)
-    if updateResult == 1 then
-      Utils.DebugPrint("Successfully added " .. tostring(addXP) .. "XP and $" .. tostring(addMoney) .. " to user " .. tostring(user.id))
-    else
-      Utils.DebugPrint("Something went wrong updating " .. tostring(user.id))
-    end   
-  end)
-end,true)
+    if #args ~= 3 then
+      Utils.DebugPrint("Must specify [identifier] [xp] [money]")
+      return
+    end
+
+    local manualIdentifier = tostring(args[1])
+    local addXP = tonumber(args[2])
+    local addMoney = tonumber(args[3])
+
+    local identifier = manualIdentifier:gsub(".*:", "")
+    local results =
+      exports["ggsql"]:QueryAsync(
+      "UPDATE users SET xp=xp+@addXp, money=money+@addMoney, donator=1 WHERE licenseId=@lid OR steamId=@lid OR discordId=@lid OR fivemId=@lid LIMIT 1;",
+      {
+        addXp = addXp,
+        addMoney = addMoney,
+        lid = identifier
+      },
+      function(updateResult)
+        if updateResult == 1 then
+          Utils.DebugPrint("Successfully added " .. tostring(addXP) .. "XP and $" .. tostring(addMoney) .. " to user " .. identifier)
+        else
+          Utils.DebugPrint("Something went wrong updating " .. identifier)
+        end
+      end
+    )
+  end,
+  true
+)
+
+RegisterCommand(
+  "addtempprio",
+  function(source, args, raw)
+    if source ~= 0 or #args ~= 3 then
+      return
+    end
+
+    local identifier = tostring(args[1])
+    local power = tonumber(args[2])
+    local seconds = tonumber(args[3]) * 3600
+
+    Queue.AddPriority(identifier, power, seconds)
+
+    Utils.DebugPrint("Added " .. identifier .. " to temp priority for " .. tostring(seconds / 3600) .. " hours.")
+  end,
+  true
+)

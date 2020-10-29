@@ -8,6 +8,12 @@ Citizen.CreateThread(
       function(s, allow)
         local src = s
         local ids = Queue.Exports:GetIds(src)
+
+        if ids == nil or type(ids) == "boolean" then
+          allow("Could not get your identifiers. Try again please.")
+          return
+        end
+
         local licenseId = ""
         local steamId = ""
         local xblId = ""
