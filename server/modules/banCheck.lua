@@ -1,4 +1,78 @@
 local string_sub = string.sub
+local get_player_name = GetPlayerName
+local colorCodes = {
+  "^1",
+  "^2",
+  "^3",
+  "^4",
+  "^5",
+  "^6",
+  "^7",
+  "^8",
+  "^9",
+  "^*",
+  "~r~",
+  "~g~",
+  "~b~",
+  "~y~",
+  "~p~",
+  "~c~",
+  "~m~",
+  "~u~",
+  "~o~",
+  "~h~"
+}
+
+local illegalNames = {
+  "34ByTe Community",
+  "AlphaV ~ 5391",
+  "Baran#8992",
+  "Brutan",
+  "Desudo",
+  "EulenCheats",
+  "Fallen#0811",
+  "HAMMAFIA",
+  "HamMafia",
+  "HamHaxia",
+  "Ham Mafia",
+  "WATERMALONE",
+  "hammafia.com",
+  "KoGuSzEk#3251",
+  "Lynx",
+  "lynxmenu.com",
+  "MARVIN menu",
+  "Melon#1379",
+  "Soviet Bear",
+  "Xanax#0134",
+  "iLostName#7138",
+  "vjuton.pl",
+  "renalua.com",
+  "TeamSpeak",
+  "brutan",
+  "Baran",
+  "Anti-Lynx",
+  "ribbon_1",
+  "яιввση",
+  "noyaas",
+  "d0pamine",
+  "Dopamine",
+  "Plane#000",
+  "SKAZAMENU",
+  "aries",
+  "skaza",
+  "OnionExecutor",
+  "BAGGY menu",
+  "Baggy menu",
+  "Baggy Menu",
+  "^0AlphaV",
+  "TITO MODZ",
+  "Sokin_Menu",
+  "v500",
+  "kogusz",
+  "falloutmenu",
+  "RedEngine"
+}
+
 Citizen.CreateThread(
   function()
     while not Queue.IsReady() do
@@ -7,6 +81,31 @@ Citizen.CreateThread(
     Queue.OnJoin(
       function(s, allow)
         local src = s
+        local name = get_player_name(src)
+        if name ~= nil and name ~= "**Invalid**" then
+          name = string.lower(name)
+          if string.find(name, "<html>") then
+            allow("Player name containing HTML code is not allowed. Change your name and reconnect.")
+            return
+          end
+          for _, pattern in ipairs(colorCodes) do
+            if string.find(name, pattern) then
+              allow("Colored Player name is not allowed. Remove color pattern(s) and reconnect.")
+              return
+            end
+          end
+
+          for _, pattern in ipairs(illegalNames) do
+            if string.find(name, string.lower(pattern)) then
+              allow(
+                "Player name contains illegal characters ( " ..
+                  pattern .. " ). Please change your Player name it in the FiveM Settings or Steam."
+              )
+              return
+            end
+          end
+        end
+
         local ids = Queue.Exports:GetIds(src)
 
         if ids == nil or type(ids) == "boolean" then
