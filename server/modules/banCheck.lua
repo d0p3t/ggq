@@ -81,22 +81,30 @@ Citizen.CreateThread(
     Queue.OnJoin(
       function(s, allow)
         local src = s
+
+        local ids = Queue.Exports:GetIds(src)
+
+        if ids == nil or type(ids) == "boolean" then
+          allow("Could not get your identifiers. Try again please.")
+          return
+        end
+
         local name = get_player_name(src)
         if name ~= nil and name ~= "**Invalid**" then
           name = string.lower(name)
-          if string.find(name, "<html>") then
+          if string.find(name, "<html>", 1, true) then
             allow("Player name containing HTML code is not allowed. Change your name and reconnect.")
             return
           end
           for _, pattern in ipairs(colorCodes) do
-            if string.find(name, pattern) then
+            if string.find(name, pattern, 1, true) then
               allow("Colored Player name is not allowed. Remove color pattern(s) and reconnect.")
               return
             end
           end
 
           for _, pattern in ipairs(illegalNames) do
-            if string.find(name, string.lower(pattern)) then
+            if string.find(name, string.lower(pattern), 1, true) then
               allow(
                 "Player name contains illegal characters ( " ..
                   pattern .. " ). Please change your Player name it in the FiveM Settings or Steam."
@@ -104,13 +112,6 @@ Citizen.CreateThread(
               return
             end
           end
-        end
-
-        local ids = Queue.Exports:GetIds(src)
-
-        if ids == nil or type(ids) == "boolean" then
-          allow("Could not get your identifiers. Try again please.")
-          return
         end
 
         local licenseId = ""
