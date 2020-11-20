@@ -93,12 +93,14 @@ Citizen.CreateThread(
         if name ~= nil and name ~= "**Invalid**" then
           name = string.lower(name)
           if string.find(name, "<html>", 1, true) then
-            allow("Player name containing HTML code is not allowed. Change your name and reconnect.")
+            allow("\n\nReason: Player name containing HTML code is not allowed. \nAction: Change your name and reconnect.")
             return
           end
           for _, pattern in ipairs(colorCodes) do
             if string.find(name, pattern, 1, true) then
-              allow("Colored Player name is not allowed. Remove color pattern(s) and reconnect.")
+              allow(
+                "\n\nReason: Colored name is not allowed. \nAction: Remove color pattern(s) from name and reconnect.\nPattern: " .. pattern
+              )
               return
             end
           end
@@ -106,8 +108,8 @@ Citizen.CreateThread(
           for _, pattern in ipairs(illegalNames) do
             if string.find(name, string.lower(pattern), 1, true) then
               allow(
-                "Player name contains illegal characters ( " ..
-                  pattern .. " ). Please change your Player name it in the FiveM Settings or Steam."
+                "\n\nReason: Player name contains illegal characters. \nAction: Change your name in the FiveM Settings or Steam.\nPatteron: " ..
+                  pattern
               )
               return
             end
@@ -273,8 +275,9 @@ Citizen.CreateThread(
           end
 
           allow(
-            "Player: " ..
-              licenseId .. "\nBanned until: " .. endDate .. "\nReason: " .. results[1].reason .. "\n\nBan Appeal at discord.gungame.store"
+            "\n\nYOU ARE BANNED\n\nID: " ..
+              licenseId ..
+                "\nUntil: " .. endDate .. "\nReason: " .. results[1].reason .. "\n\nWrongfully banned? Appeal at discord.gungame.store"
           )
         end
       end
