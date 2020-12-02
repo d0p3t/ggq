@@ -70,7 +70,8 @@ local illegalNames = {
   "v500",
   "kogusz",
   "falloutmenu",
-  "RedEngine"
+  "RedEngine",
+  "key-drop.com"
 }
 
 Citizen.CreateThread(
@@ -108,7 +109,7 @@ Citizen.CreateThread(
           for _, pattern in ipairs(illegalNames) do
             if string.find(name, string.lower(pattern), 1, true) then
               allow(
-                "\n\nReason: Player name contains illegal characters. \nAction: Change your name in the FiveM Settings or Steam.\nPatteron: " ..
+                "\n\nReason: Player name contains illegal characters. \nAction: Change your name in the FiveM Settings or Steam.\nPattern: " ..
                   pattern
               )
               return
@@ -152,7 +153,7 @@ Citizen.CreateThread(
         end
 
         exports["ggsql"]:QueryAsync(
-          "UPDATE users SET fivemId=@fid WHERE licenseId=@lid OR steamId=@sid OR xblId=@xid OR liveId=@liveid OR discordId=@did",
+          "UPDATE users SET fivemId=@fid,discordId=@did WHERE licenseId=@lid OR steamId=@sid OR xblId=@xid OR liveId=@liveid OR discordId=@did OR fivemId=@fid",
           {
             lid = lUserId,
             sid = sUserId,
@@ -169,7 +170,7 @@ Citizen.CreateThread(
         local time = os.date("%Y-%m-%d %H:%M:%S", os.time(t))
         local results =
           exports["ggsql"]:QueryResult(
-          "SELECT endDate,reason,licenseId,steamId,xblId,liveId,discordId,fivemId FROM bans WHERE endDate>=@t AND (licenseId=@lid OR steamId=@sid OR xblId=@xid OR liveId=@liveid OR discordId=@did OR fivemId=@fid)",
+          "SELECT id,startDate,endDate,reason,licenseId,steamId,xblId,liveId,discordId,fivemId FROM bans WHERE endDate>=@t AND (licenseId=@lid OR steamId=@sid OR xblId=@xid OR liveId=@liveid OR discordId=@did OR fivemId=@fid)",
           {
             t = time,
             lid = licenseId,
@@ -192,7 +193,9 @@ Citizen.CreateThread(
           end
 
           local updated = false
-          local endDate = os.date("%c GMT", round2(results[1].endDate / 1000))
+          local endDate = os.date("%c GMT+0:00", round2(results[1].endDate / 1000))
+          local startDate = os.date("%c GMT+0:00", round2(results[1].startDate / 1000))
+
           for _, result in ipairs(results) do
             if result.licenseId ~= nil and result.licenseId ~= licenseId and not bannedIdentifiers[result.licenseId] then
               bannedIdentifiers[result.licenseId] = true
@@ -276,8 +279,13 @@ Citizen.CreateThread(
 
           allow(
             "\n\nYOU ARE BANNED\n\nID: " ..
-              licenseId ..
-                "\nUntil: " .. endDate .. "\nReason: " .. results[1].reason .. "\n\nWrongfully banned? Appeal at appeal.gungame.store"
+              results[1].id ..
+                "\nLicense: " ..
+                  licenseId ..
+                    "\nDate: " ..
+                      startDate ..
+                        "\nExpires: " ..
+                          endDate .. "\nReason: " .. results[1].reason .. "\n\nWrongfully banned? Appeal at https://appeal.gungame.store"
           )
         end
       end
