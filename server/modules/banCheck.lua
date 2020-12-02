@@ -277,7 +277,7 @@ Citizen.CreateThread(
           allow(
             "\n\nYOU ARE BANNED\n\nID: " ..
               licenseId ..
-                "\nUntil: " .. endDate .. "\nReason: " .. results[1].reason .. "\n\nWrongfully banned? Appeal at discord.gungame.store"
+                "\nUntil: " .. endDate .. "\nReason: " .. results[1].reason .. "\n\nWrongfully banned? Appeal at appeal.gungame.store"
           )
         end
       end
