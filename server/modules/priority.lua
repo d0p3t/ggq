@@ -1,4 +1,7 @@
 local queueReady = false
+local wait = Wait
+local os_date = os.date
+local os_time = os.time
 
 Queue.OnReady(
   function()
@@ -11,16 +14,16 @@ Citizen.CreateThread(
     Queue.OnReady(
       function()
         while not Queue.IsReady() do
-          Wait(0)
+          wait(0)
         end
 
         while not exports["ggsql"] do
-          Wait(0)
+          wait(0)
         end
 
         Utils.DebugPrint("Connectqueue and GGSql are ready!")
 
-        local time = os.date("%Y-%m-%d %H:%M:%S", os.time(t))
+        local time = os_date("%Y-%m-%d %H:%M:%S", os_time(t))
         local results =
           exports["ggsql"]:QueryResult(
           "SELECT userId, priority, donatorLevel, manualIdentifier FROM queue WHERE expirationDate>=@t",
@@ -64,13 +67,17 @@ Citizen.CreateThread(
               end
             end
 
-            local additionalIds = exports["ggsql"]:QueryResult("SELECT id, licenseId FROM users WHERE " .. tostring(orString))
+            local additionalIds = exports["ggsql"]:QueryResult("SELECT id, licenseId, steamId, xblId, liveId FROM users WHERE " .. tostring(orString))
             if additionalIds then
               local additionalIdentifiers = {}
               for _, additionalId in ipairs(additionalIds) do
                 additionalIdentifiers["license:" .. additionalId.licenseId] = grabAdditionalUsers[additionalId.id]
+                additionalIdentifiers["steam:" .. additionalIds.steamId] = grabAdditionalUsers[additionalId.id]
+                additionalIdentifiers["xbl:" .. additionalIds.xblId] = grabAdditionalUsers[additionalId.id]
+                additionalIdentifiers["live:" .. additionalIds.liveId] = grabAdditionalUsers[additionalId.id]
+
                 Utils.DebugPrint(
-                  "Added license:" .. additionalId.licenseId .. " with priority " .. grabAdditionalUsers[additionalId.id] .. ""
+                  "Added user with ID: " .. additionalId.id .. " (priority " .. grabAdditionalUsers[additionalId.id] .. ")"
                 )
               end
 

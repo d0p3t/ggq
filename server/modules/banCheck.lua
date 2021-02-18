@@ -1,4 +1,6 @@
 local string_sub = string.sub
+local os_date = os.date
+local os_time = os.time
 local get_player_name = GetPlayerName
 local colorCodes = {
   "^1",
@@ -71,7 +73,8 @@ local illegalNames = {
   "kogusz",
   "falloutmenu",
   "RedEngine",
-  "key-drop.com"
+  "key-drop.com",
+  "Key-Drop.com"
 }
 
 Citizen.CreateThread(
@@ -115,6 +118,9 @@ Citizen.CreateThread(
               return
             end
           end
+        else
+          allow("Something went wrong. Try again please.")
+          return
         end
 
         local licenseId = ""
@@ -153,7 +159,7 @@ Citizen.CreateThread(
         end
 
         exports["ggsql"]:QueryAsync(
-          "UPDATE users SET fivemId=@fid,discordId=@did WHERE licenseId=@lid OR steamId=@sid OR xblId=@xid OR liveId=@liveid OR discordId=@did OR fivemId=@fid",
+          "UPDATE users SET fivemId=@fid WHERE licenseId=@lid OR steamId=@sid OR xblId=@xid OR liveId=@liveid OR discordId=@did; UPDATE users SET discordId=@did WHERE licenseId=@lid OR steamId=@sid OR xblId=@xid OR liveId=@liveid",
           {
             lid = lUserId,
             sid = sUserId,
@@ -166,8 +172,22 @@ Citizen.CreateThread(
           end
         )
 
-        local t = os.date("*t")
-        local time = os.date("%Y-%m-%d %H:%M:%S", os.time(t))
+        -- exports["ggsql"]:QueryAsync(
+        --   "UPDATE users SET discordId=@did WHERE licenseId=@lid OR steamId=@sid OR xblId=@xid OR liveId=@liveid",
+        --   {
+        --     lid = lUserId,
+        --     sid = sUserId,
+        --     xid = xUserId,
+        --     liveid = liveUserId,
+        --     did = dUserId,
+        --     fid = fUserId
+        --   },
+        --   function(updateResult)
+        --   end
+        -- )
+
+        local t = os_date("*t")
+        local time = os_date("%Y-%m-%d %H:%M:%S", os_time(t))
         local results =
           exports["ggsql"]:QueryResult(
           "SELECT id,startDate,endDate,reason,licenseId,steamId,xblId,liveId,discordId,fivemId FROM bans WHERE endDate>=@t AND (licenseId=@lid OR steamId=@sid OR xblId=@xid OR liveId=@liveid OR discordId=@did OR fivemId=@fid)",
@@ -193,8 +213,8 @@ Citizen.CreateThread(
           end
 
           local updated = false
-          local endDate = os.date("%c GMT+0:00", round2(results[1].endDate / 1000))
-          local startDate = os.date("%c GMT+0:00", round2(results[1].startDate / 1000))
+          local endDate = os_date("%c GMT+0:00", round2(results[1].endDate / 1000))
+          local startDate = os_date("%c GMT+0:00", round2(results[1].startDate / 1000))
 
           for _, result in ipairs(results) do
             if result.licenseId ~= nil and result.licenseId ~= licenseId and not bannedIdentifiers[result.licenseId] then
@@ -253,7 +273,7 @@ Citizen.CreateThread(
                   newFivemId ~= fivemId
                then
                 updated = true
-                local edate = os.date("%Y-%m-%d %H:%M:%S", round2(result.endDate / 1000))
+                local edate = os_date("%Y-%m-%d %H:%M:%S", round2(result.endDate / 1000))
                 local reason = result.reason
                 exports["ggsql"]:QueryAsync(
                   banInsertQuery,

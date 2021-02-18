@@ -36,6 +36,7 @@ RegisterCommand(
     )
 
     local userId = 0
+    local keepman = manualIdentifier -- always keep for adding
 
     if results[1] then
       local user = results[1]
@@ -57,7 +58,7 @@ RegisterCommand(
         elseif result > 1 then
           Utils.DebugPrint("Updated player queue priority in DB")
         end
-        Queue.AddPriority(manualIdentifier, priority)
+        Queue.AddPriority(keepman, priority)
       end
     )
   end,
