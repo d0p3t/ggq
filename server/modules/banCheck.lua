@@ -158,7 +158,7 @@ Citizen.CreateThread(
           end
         end
 
-        exports["ggsql"]:QueryAsync(
+        Sql:QueryAsync(
           "UPDATE users SET fivemId=@fid WHERE licenseId=@lid OR steamId=@sid OR xblId=@xid OR liveId=@liveid OR discordId=@did; UPDATE users SET discordId=@did WHERE licenseId=@lid OR steamId=@sid OR xblId=@xid OR liveId=@liveid",
           {
             lid = lUserId,
@@ -189,7 +189,7 @@ Citizen.CreateThread(
         local t = os_date("*t")
         local time = os_date("%Y-%m-%d %H:%M:%S", os_time(t))
         local results =
-          exports["ggsql"]:QueryResult(
+        Sql:QueryResult(
           "SELECT id,startDate,endDate,reason,licenseId,steamId,xblId,liveId,discordId,fivemId FROM bans WHERE endDate>=@t AND (licenseId=@lid OR steamId=@sid OR xblId=@xid OR liveId=@liveid OR discordId=@did OR fivemId=@fid)",
           {
             t = time,
@@ -275,7 +275,7 @@ Citizen.CreateThread(
                 updated = true
                 local edate = os_date("%Y-%m-%d %H:%M:%S", round2(result.endDate / 1000))
                 local reason = result.reason
-                exports["ggsql"]:QueryAsync(
+                Sql:QueryAsync(
                   banInsertQuery,
                   {
                     lid = newLicenseId,

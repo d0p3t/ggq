@@ -3,6 +3,7 @@ game "gta5"
 
 dependency "queue"
 dependency "ggsql"
+dependency "ggcommon"
 
 server_scripts {
   "server/lib/utils.lua"

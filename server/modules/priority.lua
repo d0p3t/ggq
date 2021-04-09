@@ -1,5 +1,4 @@
 local queueReady = false
-local wait = Wait
 local os_date = os.date
 local os_time = os.time
 
@@ -14,18 +13,18 @@ Citizen.CreateThread(
     Queue.OnReady(
       function()
         while not Queue.IsReady() do
-          wait(0)
+          Wait(0)
         end
 
-        while not exports["ggsql"] do
-          wait(0)
+        while not Sql or Sql == {} do
+          Wait(0)
         end
 
         Utils.DebugPrint("Connectqueue and GGSql are ready!")
 
         local time = os_date("%Y-%m-%d %H:%M:%S", os_time(t))
         local results =
-          exports["ggsql"]:QueryResult(
+        Sql:QueryResult(
           "SELECT userId, priority, donatorLevel, manualIdentifier FROM queue WHERE expirationDate>=@t",
           {
             t = time
@@ -67,15 +66,14 @@ Citizen.CreateThread(
               end
             end
 
-            local additionalIds = exports["ggsql"]:QueryResult("SELECT id, licenseId, steamId, xblId, liveId FROM users WHERE " .. tostring(orString))
+            local additionalIds = Sql:QueryResult("SELECT id, licenseId, steamId, xblId, liveId FROM users WHERE " .. tostring(orString))
             if additionalIds then
               local additionalIdentifiers = {}
               for _, additionalId in ipairs(additionalIds) do
                 additionalIdentifiers["license:" .. additionalId.licenseId] = grabAdditionalUsers[additionalId.id]
-                additionalIdentifiers["steam:" .. additionalIds.steamId] = grabAdditionalUsers[additionalId.id]
-                additionalIdentifiers["xbl:" .. additionalIds.xblId] = grabAdditionalUsers[additionalId.id]
-                additionalIdentifiers["live:" .. additionalIds.liveId] = grabAdditionalUsers[additionalId.id]
-
+                if additionalId.steamId then additionalIdentifiers["steam:" .. additionalId.steamId] = grabAdditionalUsers[additionalId.id] end
+                if additionalId.xblId then additionalIdentifiers["xbl:" .. additionalId.xblId] = grabAdditionalUsers[additionalId.id] end
+                if additionalId.liveId then additionalIdentifiers["live:" .. additionalId.liveId] = grabAdditionalUsers[additionalId.id] end
                 Utils.DebugPrint(
                   "Added user with ID: " .. additionalId.id .. " (priority " .. grabAdditionalUsers[additionalId.id] .. ")"
                 )
